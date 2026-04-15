@@ -1,70 +1,57 @@
 import { test, expect } from '@playwright/test';
 import { loginData } from '../test-data/login.data';
+import { LoginPage } from '../pages/login.page';
 
-test.describe('Pulpit tests', () => {
+test.describe('User login to Demobank', () => {
   test.beforeEach(async ({ page }) => {
-    const userId = loginData.userId;
-    const userPassword = loginData.userPassword;
-
     await page.goto('/');
-    await page.getByTestId('login-input').fill(userId);
-    await page.getByTestId('password-input').fill(userPassword);
-    await page.getByTestId('login-button').click();
   });
 
-  test('quick payment with correct data', async ({ page }) => {
+  test('successful login with correct credentials', async ({ page }) => {
     // Arrange
-    const receiverId = '2';
-    const transferAmount = '150';
-    const transferTitle = 'pizza';
-    const expectedTransferReceiver = 'Chuck Demobankowy';
+    const userId = loginData.userId;
+    const userPassword = loginData.userPassword;
+    const expectedUserName = 'Jan Demobankowy';
 
     // Act
-    await page.locator('#widget_1_transfer_receiver').selectOption(receiverId);
-    await page.locator('#widget_1_transfer_amount').fill(transferAmount);
-    await page.locator('#widget_1_transfer_title').fill(transferTitle);
-
-    await page.getByRole('button', { name: 'wykonaj' }).click();
-    await page.getByTestId('close-button').click();
+    const loginPage = new LoginPage(page);
+    await loginPage.loginInput.fill(userId);
+    await loginPage.passwordInput.fill(userPassword);
+    await loginPage.loginButton.click();
 
     // Assert
-    await expect(page.locator('#show_messages')).toHaveText(
-      `Przelew wykonany! ${expectedTransferReceiver} - ${transferAmount},00PLN - ${transferTitle}`
+    await expect(page.getByTestId('user-name')).toHaveText(expectedUserName);
+  });
+
+  test('unsuccessful login with too short username', async ({ page }) => {
+    // Arrange
+    const incorrectUserId = 'tester';
+    const expectedErrorMessage = 'identyfikator ma min. 8 znaków';
+
+    // Act
+    await page.getByTestId('login-input').fill(incorrectUserId);
+    await page.getByTestId('password-input').click();
+
+    // Assert
+    await expect(page.getByTestId('error-login-id')).toHaveText(
+      expectedErrorMessage,
     );
   });
 
-  test('successful mobile top-up', async ({ page }) => {
+  test('unsuccessful login with too short password', async ({ page }) => {
     // Arrange
-    const topUpReceiver = '500 xxx xxx';
-    const topUpAmount = '50';
-    const expectedMessage = `Doładowanie wykonane! ${topUpAmount},00PLN na numer ${topUpReceiver}`;
+    const userId = loginData.userId;
+    const incorrectPassword = '1234';
+    const expectedErrorMessage = 'hasło ma min. 8 znaków';
 
     // Act
-    await page.locator('#widget_1_topup_receiver').selectOption(topUpReceiver);
-    await page.locator('#widget_1_topup_amount').fill(topUpAmount);
-    await page.locator('#uniform-widget_1_topup_agreement span').click();
-    await page.getByRole('button', { name: 'doładuj telefon' }).click();
-    await page.getByTestId('close-button').click();
+    await page.getByTestId('login-input').fill(userId);
+    await page.getByTestId('password-input').fill(incorrectPassword);
+    await page.getByTestId('password-input').blur();
 
     // Assert
-    await expect(page.locator('#show_messages')).toHaveText(expectedMessage);
-  });
-
-  test('correct balance after successful mobile top-up', async ({ page }) => {
-    // Arrange
-    const topUpReceiver = '500 xxx xxx';
-    const topUpAmount = '50';
-    const initialBalance = await page.locator('#money_value').innerText();
-    const expectedBalance = Number(initialBalance) - Number(topUpAmount);
-
-    // Act
-    await page.locator('#widget_1_topup_receiver').selectOption(topUpReceiver);
-    await page.locator('#widget_1_topup_amount').fill(topUpAmount);
-    await page.locator('#uniform-widget_1_topup_agreement span').click();
-    await page.getByRole('button', { name: 'doładuj telefon' }).click();
-    await page.getByTestId('close-button').click();
-
-    // Assert
-    await expect(page.locator('#money_value')).toHaveText(`${expectedBalance}`);
+    await expect(page.getByTestId('error-login-password')).toHaveText(
+      expectedErrorMessage,
+    );
   });
 });

@@ -10,7 +10,7 @@ export class PaymentPage {
   actionCloseButton: Locator;
 
   messageText: Locator;
-  
+
   sideMenuComponent: SideMenuComponent;
 
   constructor(private page: Page) {
@@ -18,11 +18,25 @@ export class PaymentPage {
     this.transferToInput = this.page.getByTestId('form_account_to');
     this.transferAmountInput = this.page.getByTestId('form_amount');
 
-    this.transferButton = this.page.getByRole('button', { name: 'wykonaj przelew' });
+    this.transferButton = this.page.getByRole('button', {
+      name: 'wykonaj przelew',
+    });
     this.actionCloseButton = this.page.getByTestId('close-button');
 
     this.messageText = this.page.locator('#show_messages');
-    
+
     this.sideMenuComponent = new SideMenuComponent(this.page);
+  }
+  async makeTransfer(
+    transferReceiver: string,
+    transferAccount: string,
+    transferAmount: string,
+  ): Promise<void> {
+    await this.transferReceiverInput.fill(transferReceiver);
+    await this.transferToInput.fill(transferAccount);
+    await this.transferAmountInput.fill(transferAmount);
+
+    await this.transferButton.click();
+    await this.actionCloseButton.click();
   }
 }

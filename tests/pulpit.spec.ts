@@ -1,17 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { loginData } from '../test-data/login.data';
 import { LoginPage } from '../pages/login.page';
+import { PulpitPage } from '../pages/pulpit.page';
 
 test.describe('Pulpit tests', () => {
+  let pulpitPage: PulpitPage;
   test.beforeEach(async ({ page }) => {
     const userId = loginData.userId;
     const userPassword = loginData.userPassword;
 
     await page.goto('/');
     const loginPage = new LoginPage(page);
-    await loginPage.loginInput.fill(userId);
-    await loginPage.passwordInput.fill(userPassword);
-    await loginPage.loginButton.click();
+    await loginPage.login(userId,userPassword); 
+    pulpitPage = new PulpitPage(page);
+
   });
 
   test('quick payment with correct data', async ({ page }) => {
@@ -22,15 +24,14 @@ test.describe('Pulpit tests', () => {
     const expectedTransferReceiver = 'Chuck Demobankowy';
 
     // Act
-    await page.locator('#widget_1_transfer_receiver').selectOption(receiverId);
-    await page.locator('#widget_1_transfer_amount').fill(transferAmount);
-    await page.locator('#widget_1_transfer_title').fill(transferTitle);
-
-    await page.getByRole('button', { name: 'wykonaj' }).click();
-    await page.getByTestId('close-button').click();
+    await pulpitPage.transferReciver.selectOption(receiverId);
+    await pulpitPage.transferAmount.fill(transferAmount);
+    await pulpitPage.transferTitle.fill(transferTitle);
+    await pulpitPage.buttonSubmit.click();
+    await pulpitPage.buttonClose.click();
 
     // Assert
-    await expect(page.locator('#show_messages')).toHaveText(
+    await expect(pulpitPage.messages).toHaveText(
       `Przelew wykonany! ${expectedTransferReceiver} - ${transferAmount},00PLN - ${transferTitle}`,
     );
   });
@@ -40,33 +41,38 @@ test.describe('Pulpit tests', () => {
     const topUpReceiver = '500 xxx xxx';
     const topUpAmount = '50';
     const expectedMessage = `Doładowanie wykonane! ${topUpAmount},00PLN na numer ${topUpReceiver}`;
+  
 
     // Act
-    await page.locator('#widget_1_topup_receiver').selectOption(topUpReceiver);
-    await page.locator('#widget_1_topup_amount').fill(topUpAmount);
-    await page.locator('#uniform-widget_1_topup_agreement span').click();
-    await page.getByRole('button', { name: 'doładuj telefon' }).click();
-    await page.getByTestId('close-button').click();
+    await pulpitPage.topupReciver.selectOption(topUpReceiver);
+    await pulpitPage.topupAmount.fill(topUpAmount);
+    await pulpitPage.topupAgreement.click();
+    await pulpitPage.topupSumbitButton.click();
+    await pulpitPage.buttonClose.click();
 
     // Assert
-    await expect(page.locator('#show_messages')).toHaveText(expectedMessage);
+    await expect(pulpitPage.messages).toHaveText(expectedMessage);
   });
 
   test('correct balance after successful mobile top-up', async ({ page }) => {
     // Arrange
+   
     const topUpReceiver = '500 xxx xxx';
     const topUpAmount = '50';
-    const initialBalance = await page.locator('#money_value').innerText();
+    const initialBalance = await pulpitPage.moneyValueText.innerText();
+    console.log(initialBalance);
     const expectedBalance = Number(initialBalance) - Number(topUpAmount);
+    console.log(expectedBalance);
 
     // Act
-    await page.locator('#widget_1_topup_receiver').selectOption(topUpReceiver);
-    await page.locator('#widget_1_topup_amount').fill(topUpAmount);
-    await page.locator('#uniform-widget_1_topup_agreement span').click();
-    await page.getByRole('button', { name: 'doładuj telefon' }).click();
-    await page.getByTestId('close-button').click();
+
+    await pulpitPage.topupReciver.selectOption(topUpReceiver);
+    await pulpitPage.topupAmount.fill(topUpAmount);
+    await pulpitPage.topupAgreement.click();
+    await pulpitPage.topupSumbitButton.click(); 
+    await pulpitPage.buttonClose.click();
 
     // Assert
-    await expect(page.locator('#money_value')).toHaveText(`${expectedBalance}`);
+    await expect(pulpitPage.moneyValueText).toHaveText(`${expectedBalance}`);
   });
 });

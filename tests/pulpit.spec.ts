@@ -11,7 +11,7 @@ test.describe('Pulpit tests', () => {
 
     await page.goto('/');
     const loginPage = new LoginPage(page);
-    await loginPage.login(userId,userPassword); 
+    await loginPage.login(userId, userPassword);
     pulpitPage = new PulpitPage(page);
   });
 
@@ -23,11 +23,7 @@ test.describe('Pulpit tests', () => {
     const expectedTransferReceiver = 'Chuck Demobankowy';
 
     // Act
-    await pulpitPage.transferReciver.selectOption(receiverId);
-    await pulpitPage.transferAmount.fill(transferAmount);
-    await pulpitPage.transferTitle.fill(transferTitle);
-    await pulpitPage.buttonSubmit.click();
-    await pulpitPage.buttonClose.click();
+    await pulpitPage.quickPayment(receiverId, transferAmount, transferTitle);
 
     // Assert
     await expect(pulpitPage.messages).toHaveText(
@@ -40,14 +36,9 @@ test.describe('Pulpit tests', () => {
     const topUpReceiver = '500 xxx xxx';
     const topUpAmount = '50';
     const expectedMessage = `Doładowanie wykonane! ${topUpAmount},00PLN na numer ${topUpReceiver}`;
-  
 
     // Act
-    await pulpitPage.topupReciver.selectOption(topUpReceiver);
-    await pulpitPage.topupAmount.fill(topUpAmount);
-    await pulpitPage.topupAgreement.click();
-    await pulpitPage.topupSumbitButton.click();
-    await pulpitPage.buttonClose.click();
+    await pulpitPage.mobilePayment(topUpReceiver, topUpAmount);
 
     // Assert
     await expect(pulpitPage.messages).toHaveText(expectedMessage);
@@ -55,21 +46,13 @@ test.describe('Pulpit tests', () => {
 
   test('correct balance after successful mobile top-up', async ({ page }) => {
     // Arrange
-   
     const topUpReceiver = '500 xxx xxx';
     const topUpAmount = '50';
     const initialBalance = await pulpitPage.moneyValueText.innerText();
-    console.log(initialBalance);
     const expectedBalance = Number(initialBalance) - Number(topUpAmount);
-    console.log(expectedBalance);
 
     // Act
-
-    await pulpitPage.topupReciver.selectOption(topUpReceiver);
-    await pulpitPage.topupAmount.fill(topUpAmount);
-    await pulpitPage.topupAgreement.click();
-    await pulpitPage.topupSumbitButton.click(); 
-    await pulpitPage.buttonClose.click();
+    await pulpitPage.mobilePayment(topUpReceiver, topUpAmount);
 
     // Assert
     await expect(pulpitPage.moneyValueText).toHaveText(`${expectedBalance}`);

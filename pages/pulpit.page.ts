@@ -13,8 +13,8 @@ export class PulpitPage {
   topupAgreement: Locator;
   topupSumbitButton: Locator;
   moneyValueText: Locator;
-  userNameText:Locator; 
-  
+  userNameText: Locator;
+
   sideMenuComponent: SideMenuComponent;
 
   constructor(private page: Page) {
@@ -35,5 +35,26 @@ export class PulpitPage {
     this.moneyValueText = page.locator('#money_value');
     this.userNameText = this.page.getByTestId('user-name');
     this.sideMenuComponent = new SideMenuComponent(this.page);
+  }
+  async quickPayment(
+    receiverId: string,
+    transferAmount: string,
+    transferTitle: string,
+  ): Promise<void> {
+    await this.transferReciver.selectOption(receiverId);
+    await this.transferAmount.fill(transferAmount);
+    await this.transferTitle.fill(transferTitle);
+    await this.buttonSubmit.click();
+    await this.buttonClose.click();
+  }
+  async mobilePayment(
+    topUpReceiver: string,
+    topUpAmount: string,
+  ): Promise<void> {
+    await this.topupReciver.selectOption(topUpReceiver);
+    await this.topupAmount.fill(topUpAmount);
+    await this.topupAgreement.click();
+    await this.topupSumbitButton.click();
+    await this.buttonClose.click();
   }
 }

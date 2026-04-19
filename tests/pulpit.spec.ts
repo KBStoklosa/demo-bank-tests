@@ -13,7 +13,6 @@ test.describe('Pulpit tests', () => {
     const loginPage = new LoginPage(page);
     await loginPage.login(userId,userPassword); 
     pulpitPage = new PulpitPage(page);
-
   });
 
   test('quick payment with correct data', async ({ page }) => {
